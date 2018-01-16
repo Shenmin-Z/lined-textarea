@@ -1,11 +1,8 @@
 <template>
     <div class="lined-textarea">
         <div class="lined-textarea__lines"
-             :style="{ width: longestWidth }"
+             :style="{ 'padding-right': longestWidth}"
         >
-            <div class="lined-textarea__lines__placeholder"
-               v-html="longest"
-            ></div>
             <div class="lined-textarea__lines__inner"
                  ref="lines"
             >
@@ -37,9 +34,8 @@ export default {
     data() {
         return {
             content: '',
-            longestWidth: 8, // Hard coded
-            numPerLine: 0,
-            scrollOffsetY: -19.5, // Hard coded line height (13 * 1.5), may refactor later
+            widthPerChar: 8, // Hard coded
+            numPerLine: 1,
             scrolledLength: 0
         };
     },
@@ -71,17 +67,21 @@ export default {
                 const words = sentence.split(' ');
                 let currentLine = 1;
                 let spaceLeft = width;
+                let spaceOnNewLine = false;
                 words.forEach((word) => {
+                    let sliced = false;
                     while (spaceLeft === width && word.length >= spaceLeft) {
                         currentLine++;
                         word = word.slice(width);
+                        sliced = true;
                         if (word === '') return;
                     }
                     if (spaceLeft === width) {
-                        spaceLeft -= word.length;
+                        spaceLeft -= !spaceOnNewLine || sliced ? word.length : word.length + 1;
                         return;
                     }
                     if (word.length + 1 > spaceLeft) {
+                        spaceOnNewLine = spaceLeft === 0;
                         currentLine++;
                         spaceLeft = width;
                     }
@@ -101,12 +101,11 @@ export default {
             });
             return lineNumbers;
         },
-        longest() {
+        longestWidth() {
             for (let i = this.lines.length - 1; i >= 0; i--) {
                 if (this.lines[i] === '&nbsp;')
                     continue;
-                this.longestWidth = (this.lines[i] + '').length * 8 + 'px'; //Hard coded
-                return this.lines[i];
+                return (this.lines[i] + '').length * this.widthPerChar + 10 + 'px'; // 10: base padding-right
             }
         }
     },
@@ -116,8 +115,8 @@ export default {
             const styles = getComputedStyle(textarea);
             const paddingLeft = parseFloat(styles.getPropertyValue('padding-left')); 
             const paddingRight = parseFloat(styles.getPropertyValue('padding-right')); 
-            const borderLeft = parseFloat(styles.getPropertyValue('border-left')); 
-            const borderRight = parseFloat(styles.getPropertyValue('border-right')); 
+            const borderLeft = parseFloat(styles.getPropertyValue('border-left-width')); 
+            const borderRight = parseFloat(styles.getPropertyValue('border-right-width')); 
             const fontSize = styles.getPropertyValue('font-size');
             const fontFamily = styles.getPropertyValue('font-family');
             const width = textarea.offsetWidth - paddingLeft - paddingRight - borderLeft - borderRight;
@@ -138,7 +137,7 @@ export default {
             this.syncScroll();
         },
         syncScroll() {
-            this.$refs.lines.style.transform = `translateY(${this.scrollOffsetY - this.scrolledLength}px)`;
+            this.$refs.lines.style.transform = `translateY(${-this.scrolledLength}px)`;
         }
     }
 };
@@ -161,7 +160,7 @@ export default {
     background-color: #F0F0F0 !important;
     border-radius: 10px 0 0 10px;
     border-right-width: 0 !important;
-    padding: 15px 10px 15px 15px !important;
+    padding: 15px 10px 15px 15px;
     overflow: hidden;
     position: relative;
     flex-shrink: 1;
@@ -169,12 +168,6 @@ export default {
 
 .lined-textarea__lines__inner {
     position: absolute;
-}
-
-/* A placeholder to inflate the lines container */
-.lined-textarea__lines__placeholder {
-    word-break: keep-all;
-    opacity: 0;
 }
 
 .lined-textarea__lines__line {
