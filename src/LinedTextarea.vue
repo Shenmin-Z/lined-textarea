@@ -1,15 +1,15 @@
 <template>
     <div class="lined-textarea">
         <div class="lined-textarea__lines"
-             :style="{ 'padding-right': longestWidth}"
+             :style="{ 'padding-right': longestWidth + 'px'}"
         >
             <div class="lined-textarea__lines__inner"
                  ref="lines"
             >
-               <p v-for="(line, index) in lines"
-                :key="index"
-                class="lined-textarea__lines__line"
-                v-html="line"
+                <p v-for="(line, index) in lines"
+                   :key="index"
+                   class="lined-textarea__lines__line"
+                   v-html="line"
                 ></p> 
             </div>
         </div>
@@ -63,31 +63,24 @@ export default {
             if (this.content === '') return [1];
             const lineNumbers = [];
             let num = 1;
-            function getWrapTimes(sentence, width) {
+            function getWrapTimes(sentence, width) { // Seems to work with pre-wrap
                 const words = sentence.split(' ');
                 let currentLine = 1;
                 let spaceLeft = width;
-                let spaceOnNewLine = false;
                 words.forEach((word) => {
-                    let sliced = false;
                     while (spaceLeft === width && word.length >= spaceLeft) {
                         currentLine++;
                         word = word.slice(width);
-                        sliced = true;
-                        if (word === '') return;
                     }
                     if (spaceLeft === width) {
-                        spaceLeft -= !spaceOnNewLine || sliced ? word.length : word.length + 1;
+                        spaceLeft -= word.length;
                         return;
                     }
                     if (word.length + 1 > spaceLeft) {
-                        spaceOnNewLine = spaceLeft === 0;
                         currentLine++;
                         spaceLeft = width;
                     }
-                    if (word.length <= spaceLeft) {
-                        spaceLeft -= word.length + 1;
-                    }
+                    spaceLeft -= spaceLeft === width ? word.length : word.length + 1;
                 });
                 return spaceLeft === width ? currentLine - 1 : currentLine;
             }
@@ -105,12 +98,19 @@ export default {
             for (let i = this.lines.length - 1; i >= 0; i--) {
                 if (this.lines[i] === '&nbsp;')
                     continue;
-                return (this.lines[i] + '').length * this.widthPerChar + 10 + 'px'; // 10: base padding-right
+                return (this.lines[i] + '').length * this.widthPerChar + 10; // 10px base padding-right
+            }
+        }
+    },
+    watch: {
+        longestWidth(val, oldVal) {
+            if (val !== oldVal) {
+                this.$nextTick(() => this.calculateCharactersPerLine())
             }
         }
     },
     methods: {
-        calculateCharactersPerLine() {
+        calculateCharactersPerLine() { // May be +-1 from real value >_<
             const textarea = this.$refs.textarea;
             const styles = getComputedStyle(textarea);
             const paddingLeft = parseFloat(styles.getPropertyValue('padding-left')); 
@@ -178,12 +178,13 @@ export default {
     flex-shrink: 100;
     border-radius: 0 10px 10px 0;
     border-left-width: 0 !important;
-    resize: vertical;
+    resize: vertical; /* No simple way to capture resize event(needed for calculate line width), disallow width change */
     margin: 0;
     line-height: inherit;
     font-family: monospace !important; 
     padding: 15px;
     width: 100%;
+    white-space: pre-wrap;
 }
 
 .lined-textarea__content:focus {
