@@ -1,0 +1,19 @@
+email@example.com
+firstname.lastname@example.com
+email@subdomain.example.com
+firstname+lastname@example.com
+not valid
+email@example.co.jp
+firstname_lastname@example.com
+
+
+
+(123) 456-7890
+(123)456-7890
+(123)456-xxxx
+123-456-7890
+123.456.7890
+1234567890
++31636363634
+075-63546725
+a invalid input:w

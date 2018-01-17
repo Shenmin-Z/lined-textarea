@@ -9,6 +9,7 @@
                 <p v-for="(line, index) in lines"
                    :key="index"
                    class="lined-textarea__lines__line"
+                   :class="{ 'lined-textarea__lines__line--invalid': invalidLines.includes(line) }"
                    v-html="line"
                 ></p> 
             </div>
@@ -40,7 +41,10 @@ export default {
         };
     },
     props: {
-        validation: String,
+        validate: {
+            type: Function,
+            default: () => true
+        },
         disabled: {
             type: Boolean,
             default: false
@@ -59,11 +63,20 @@ export default {
         }
     },
     computed: {
+        invalidLines() {
+            const lineNumbers = [];
+            this.content.split('\n').forEach((line, index) => {
+                if (!this.validate(line)) {
+                    lineNumbers.push(index + 1);
+                }
+            });
+            return lineNumbers;
+        },
         lines() {
             if (this.content === '') return [1];
             const lineNumbers = [];
             let num = 1;
-            function getWrapTimes(sentence, width) { // Seems to work with pre-wrap
+            function getWrapTimes(sentence, width) { // Seems to work with pre-wrap (has problem with dash)
                 const words = sentence.split(' ');
                 let currentLine = 1;
                 let spaceLeft = width;
@@ -84,7 +97,7 @@ export default {
                 });
                 return spaceLeft === width ? currentLine - 1 : currentLine;
             }
-            const lines = this.content.split('\n').forEach((line) => {
+            this.content.split('\n').forEach((line) => {
                 const wrapTimes = getWrapTimes(line, this.numPerLine) - 1;
                 lineNumbers.push(num);
                 for(let i = 0; i < wrapTimes; i++) {
@@ -169,6 +182,10 @@ export default {
     text-align: right;
 }
 
+.lined-textarea__lines__line--invalid {
+    font-weight: bold;
+    color: red;
+}
 .lined-textarea__content {
     border: 1px solid #D7E2ED;
     border-radius: 0 10px 10px 0;
