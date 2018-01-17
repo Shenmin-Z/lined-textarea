@@ -151,19 +151,14 @@ export default {
     font-family: Helvetica, monospace;
 }
 
-.lined-textarea > * {
-    border: 1px solid #D7E2ED !important;
-    box-shadow: none !important;
-}
-
 .lined-textarea__lines {
-    background-color: #F0F0F0 !important;
+    background-color: #F0F0F0;
+    border: 1px solid #D7E2ED;
     border-radius: 10px 0 0 10px;
-    border-right-width: 0 !important;
+    border-right-width: 0;
     padding: 15px 10px 15px 15px;
     overflow: hidden;
     position: relative;
-    flex-shrink: 1;
 }
 
 .lined-textarea__lines__inner {
@@ -175,13 +170,13 @@ export default {
 }
 
 .lined-textarea__content {
-    flex-shrink: 100;
+    border: 1px solid #D7E2ED;
     border-radius: 0 10px 10px 0;
-    border-left-width: 0 !important;
+    border-left-width: 0;
     resize: vertical; /* No simple way to capture resize event(needed for calculate line width), disallow width change */
     margin: 0;
     line-height: inherit;
-    font-family: monospace !important; 
+    font-family: monospace; 
     padding: 15px;
     width: 100%;
     white-space: pre-wrap;
