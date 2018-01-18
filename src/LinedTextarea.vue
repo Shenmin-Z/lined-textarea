@@ -18,6 +18,8 @@
                   class="lined-textarea__content"
                   v-model="content"
                   v-on:scroll="scrollLines"
+                  v-on:input="recalculate"
+                  v-on:mousedown="detectResize"
                   :style="styles"
                   ref="textarea"
         ></textarea>
@@ -37,6 +39,7 @@ export default {
             content: '',
             widthPerChar: 8, // Hard coded
             numPerLine: 1,
+            previousWidth: 0,
             scrolledLength: 0
         };
     },
@@ -116,6 +119,7 @@ export default {
         }
     },
     watch: {
+        // When left area grows/shrinks e.g. 9 => 10; 100 => 99
         longestWidth(val, oldVal) {
             if (val !== oldVal) {
                 this.$nextTick(() => this.calculateCharactersPerLine())
@@ -128,11 +132,9 @@ export default {
             const styles = getComputedStyle(textarea);
             const paddingLeft = parseFloat(styles.getPropertyValue('padding-left')); 
             const paddingRight = parseFloat(styles.getPropertyValue('padding-right')); 
-            const borderLeft = parseFloat(styles.getPropertyValue('border-left-width')); 
-            const borderRight = parseFloat(styles.getPropertyValue('border-right-width')); 
             const fontSize = styles.getPropertyValue('font-size');
             const fontFamily = styles.getPropertyValue('font-family');
-            const width = textarea.offsetWidth - paddingLeft - paddingRight - borderLeft - borderRight;
+            const width = textarea.clientWidth - paddingLeft - paddingRight;
             const helper = this.$refs.helper;
             helper.style.fontSize = fontSize;
             helper.style.fontFamily = fontFamily;
@@ -145,12 +147,35 @@ export default {
             }
             helper.innerHTML = '';
         },
+        detectResize() {
+            const textarea = this.$refs.textarea;
+            const { clientWidth: w1, clientHeight: h1 } = textarea;
+            const detect = () => {
+                const { clientWidth: w2, clientHeight: h2 } = textarea;
+                if (w1 !== w2 || h1 !== h2) {
+                    this.calculateCharactersPerLine();
+                }
+                document.removeEventListener('mouseup', detect);
+            }
+            document.addEventListener('mouseup', detect);
+        },
+        recalculate() {
+            const textarea = this.$refs.textarea;
+            const width = textarea.clientWidth;
+            if (width !== this.previousWidth) {
+                this.calculateCharactersPerLine();
+            }
+            this.previousWidth = width;
+        },
         scrollLines(e) {
             this.scrolledLength = e.target.scrollTop;
             this.syncScroll();
         },
         syncScroll() {
             this.$refs.lines.style.transform = `translateY(${-this.scrolledLength}px)`;
+        },
+        test(a) {
+            console.log(a);
         }
     }
 };
@@ -190,7 +215,7 @@ export default {
     border: 1px solid #D7E2ED;
     border-radius: 0 10px 10px 0;
     border-left-width: 0;
-    resize: vertical; /* No simple way to capture resize event(needed for calculate line width), disallow width change */
+    resize: vertical;
     margin: 0;
     line-height: inherit;
     font-family: monospace; 
