@@ -33,7 +33,7 @@ export default {
 
 <style lang="scss">
 .a {
-  width: 210px;
+  min-width: 210px;
   margin: 50px auto;
 }
 

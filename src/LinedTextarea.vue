@@ -22,6 +22,7 @@
                   v-on:mousedown="detectResize"
                   :style="styles"
                   ref="textarea"
+                  wrap="hard"
         ></textarea>
         <div class="count-helper" ref="helper"></div>
     </div>
@@ -79,7 +80,13 @@ export default {
             if (this.content === '') return [1];
             const lineNumbers = [];
             let num = 1;
-            function getWrapTimes(sentence, width) { // Seems to work with pre-wrap (has problem with dash)
+            // Number of lines extended. Seems to work with pre-wrap (has problem with dash)
+            function getWrapTimes(sentence, width) { 
+                if (width <= 0) {
+                    // Protect against infinite loop
+                    console.info('Please set the min-width of textarea to allow at least one character per line.');
+                    return sentence.length + 1; // Seems browser would add one additional space
+                }
                 const words = sentence.split(' ');
                 let currentLine = 1;
                 let spaceLeft = width;
@@ -127,7 +134,7 @@ export default {
         }
     },
     methods: {
-        calculateCharactersPerLine() { // May be +-1 from real value >_<
+        calculateCharactersPerLine() { // May be +-1 off real value >_<
             const textarea = this.$refs.textarea;
             const styles = getComputedStyle(textarea);
             const paddingLeft = parseFloat(styles.getPropertyValue('padding-left')); 
@@ -138,14 +145,14 @@ export default {
             const helper = this.$refs.helper;
             helper.style.fontSize = fontSize;
             helper.style.fontFamily = fontFamily;
+            helper.innerHTML = '';
             for (let num = 1; num < 999; num++) {
                 helper.innerHTML += 'a';
-                if (helper.clientWidth > width - 1) {
+                if (helper.getBoundingClientRect().width > width) {
                     this.numPerLine = num - 1;
                     break;
                 }
             }
-            helper.innerHTML = '';
         },
         detectResize() {
             const textarea = this.$refs.textarea;
@@ -153,11 +160,17 @@ export default {
             const detect = () => {
                 const { clientWidth: w2, clientHeight: h2 } = textarea;
                 if (w1 !== w2 || h1 !== h2) {
+                    console.log('resize');
                     this.calculateCharactersPerLine();
                 }
-                document.removeEventListener('mouseup', detect);
             }
-            document.addEventListener('mouseup', detect);
+            const stop = () => {
+                this.calculateCharactersPerLine();
+                document.removeEventListener('mousemove', detect);
+                document.removeEventListener('mouseup', stop);
+            };
+            document.addEventListener('mousemove', detect);
+            document.addEventListener('mouseup', stop);
         },
         recalculate() {
             const textarea = this.$refs.textarea;
@@ -215,7 +228,6 @@ export default {
     border: 1px solid #D7E2ED;
     border-radius: 0 10px 10px 0;
     border-left-width: 0;
-    resize: vertical;
     margin: 0;
     line-height: inherit;
     font-family: monospace; 
@@ -231,5 +243,7 @@ export default {
 .count-helper {
     position: absolute;
     visibility: hidden;
+    height: auto;
+    width: auto;
 }
 </style>
