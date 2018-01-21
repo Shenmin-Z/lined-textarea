@@ -18,7 +18,9 @@
         <textarea :disabled="disabled"
                   :placeholder="placeholder"
                   class="lined-textarea__content"
-                  :class="{ 'lined-textarea__content--disabled': disabled }"
+                  :class="{ 'lined-textarea__content--disabled': disabled,
+                            'lined-textarea__content--wrap': !nowrap,
+                            'lined-textarea__content--nowrap': nowrap }"
                   v-model="content"
                   v-on:scroll="scrollLines"
                   v-on:input="onInput"
@@ -51,6 +53,10 @@ export default {
         disabled: {
             type: Boolean,
             default: false
+        },
+        nowrap: {
+            type: Boolean,
+            default: true
         },
         placeholder: {
             type: String,
@@ -139,6 +145,9 @@ export default {
                 this.$nextTick(() => this.calculateCharactersPerLine());
             }
         },
+        nowrap() {
+            this.calculateCharactersPerLine();
+        },
         value(val) {
             if (val !== this.content) {
                 this.content = val;
@@ -147,6 +156,10 @@ export default {
     },
     methods: {
         calculateCharactersPerLine() { // May be +-1 off real value >_<
+            if (this.nowrap) {
+                this.numPerLine = Number.MAX_SAFE_INTEGER;
+                return;
+            }
             const textarea = this.$refs.textarea;
             const styles = getComputedStyle(textarea);
             const paddingLeft = parseFloat(styles.getPropertyValue('padding-left')); 
@@ -245,9 +258,15 @@ export default {
     font-family: monospace; 
     padding: 15px;
     width: 100%;
+}
+
+.lined-textarea__content--wrap {
     white-space: pre-wrap;
 }
 
+.lined-textarea__content--nowrap {
+    white-space: nowrap;
+}
 
 .lined-textarea__content--disabled {
     border-radius: 10px;
