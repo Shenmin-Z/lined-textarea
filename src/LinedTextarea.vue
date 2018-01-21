@@ -1,6 +1,7 @@
 <template>
     <div class="lined-textarea">
         <div class="lined-textarea__lines"
+             v-if="!disabled"
              :style="{ 'padding-right': longestWidth + 'px'}"
         >
             <div class="lined-textarea__lines__inner"
@@ -15,14 +16,15 @@
             </div>
         </div>
         <textarea :disabled="disabled"
+                  :placeholder="placeholder"
                   class="lined-textarea__content"
+                  :class="{ 'lined-textarea__content--disabled': disabled }"
                   v-model="content"
                   v-on:scroll="scrollLines"
-                  v-on:input="recalculate"
+                  v-on:input="onInput"
                   v-on:mousedown="detectResize"
                   :style="styles"
                   ref="textarea"
-                  wrap="hard"
         ></textarea>
         <div class="count-helper" ref="helper"></div>
     </div>
@@ -32,23 +34,20 @@
 export default {
     name: 'LinedTextarea',
     mounted() {
+        this.content = this.value;
         this.syncScroll();
         this.calculateCharactersPerLine();
     },
     data() {
         return {
             content: '',
-            widthPerChar: 8, // Hard coded
+            widthPerChar: 8, // Hard coded, ajust when necessary
             numPerLine: 1,
             previousWidth: 0,
             scrolledLength: 0
         };
     },
     props: {
-        validate: {
-            type: Function,
-            default: () => true
-        },
         disabled: {
             type: Boolean,
             default: false
@@ -64,6 +63,14 @@ export default {
                     height: '300px'
                 };
             }
+        },
+        value: {
+            type: String,
+            default: ''
+        },
+        validate: {
+            type: Function,
+            default: () => true
         }
     },
     computed: {
@@ -84,7 +91,7 @@ export default {
             function getWrapTimes(sentence, width) { 
                 if (width <= 0) {
                     // Protect against infinite loop
-                    console.info('Please set the min-width of textarea to allow at least one character per line.');
+                    console.warn('Please set the min-width of textarea to allow at least one character per line.');
                     return sentence.length + 1; // Seems browser would add one additional space
                 }
                 const words = sentence.split(' ');
@@ -129,7 +136,12 @@ export default {
         // When left area grows/shrinks e.g. 9 => 10; 100 => 99
         longestWidth(val, oldVal) {
             if (val !== oldVal) {
-                this.$nextTick(() => this.calculateCharactersPerLine())
+                this.$nextTick(() => this.calculateCharactersPerLine());
+            }
+        },
+        value(val) {
+            if (val !== this.content) {
+                this.content = val;
             }
         }
     },
@@ -160,7 +172,6 @@ export default {
             const detect = () => {
                 const { clientWidth: w2, clientHeight: h2 } = textarea;
                 if (w1 !== w2 || h1 !== h2) {
-                    console.log('resize');
                     this.calculateCharactersPerLine();
                 }
             }
@@ -171,6 +182,10 @@ export default {
             };
             document.addEventListener('mousemove', detect);
             document.addEventListener('mouseup', stop);
+        },
+        onInput() {
+            this.$emit('input', this.content);
+            this.recalculate();
         },
         recalculate() {
             const textarea = this.$refs.textarea;
@@ -187,9 +202,6 @@ export default {
         syncScroll() {
             this.$refs.lines.style.transform = `translateY(${-this.scrolledLength}px)`;
         },
-        test(a) {
-            console.log(a);
-        }
     }
 };
 </script>
@@ -235,6 +247,13 @@ export default {
     width: 100%;
     white-space: pre-wrap;
 }
+
+
+.lined-textarea__content--disabled {
+    border-radius: 10px;
+    border-left-width: 1px;
+}
+
 
 .lined-textarea__content:focus {
     outline: none;
