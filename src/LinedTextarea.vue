@@ -258,6 +258,7 @@ export default {
     font-family: monospace; 
     padding: 15px;
     width: 100%;
+    overflow: auto;
 }
 
 .lined-textarea__content--wrap {
@@ -265,7 +266,13 @@ export default {
 }
 
 .lined-textarea__content--nowrap {
-    white-space: nowrap;
+    white-space: pre;
+}
+
+@supports (-ms-ime-align:auto) {
+    .lined-textarea__content--nowrap {
+        white-space: nowrap;
+    }
 }
 
 .lined-textarea__content--disabled {
