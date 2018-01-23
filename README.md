@@ -2,6 +2,8 @@
 
 A tiny Vue component to show line numbers for textarea. [Live demo](https://shenmin-z.github.io/lined-textarea/)
 
+[介绍](https://segmentfault.com/a/1190000012927038?_ea=3221154)
+
 For source code, see ONLY `src/LinedTextarea.vue`. The rest are just [webpack vue template](https://github.com/vuejs-templates/webpack-simple). Run `npm install` and `npm run build` to test.
 
 For example usage, checkout `src/App.vue`.
